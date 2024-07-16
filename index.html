@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEM File Parser</title>
+</head>
+<body>
+    <h1>Upload .dem File</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="demFile" name="demFile" accept=".dem">
+        <input type="submit" value="Upload">
+    </form>
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/demofile@4.0.2/dist/demofile.min.js"></script>
+    <script>
+        document.getElementById('uploadForm').onsubmit = function(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('demFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first!');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                const demoFile = new demofile.DemoFile();
+                demoFile.on("end", e => {
+                    if (e.error) {
+                        alert("Error during parsing: " + e.error.message);
+                        return;
+                    }
+                    const result = {
+                        header: demoFile.header,
+                        rounds: demoFile.gameEvents['round_start'],
+                        grenades: demoFile.gameEvents['grenade_thrown'],
+                        kills: demoFile.gameEvents['player_death'],
+                        damages: demoFile.gameEvents['player_hurt'],
+                        bomb: demoFile.gameEvents['bomb_planted'],
+                        smokes: demoFile.gameEvents['smokegrenade_detonate'],
+                        infernos: demoFile.gameEvents['inferno_startburn'],
+                        weapon_fires: demoFile.gameEvents['weapon_fire'],
+                        ticks: demoFile.currentTick
+                    };
+                    document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+                });
+                demoFile.parse(arrayBuffer);
+            };
+            reader.readAsArrayBuffer(file);
+        };
+    </script>
+</body>
+</html>
